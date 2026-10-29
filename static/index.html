@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symptom Specialist Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14323A; --muted: #4F666C; --paper: #F5F8F8; --card: #FFFFFF; --line: #D3DDDF;
+    --accent: #1F6F78; --accent-dark: #17535A;
+    --emergency: #B3261E; --urgent: #B85400; --soon: #7D6400; --routine: #2E6B4F;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.55; font-size: 16px; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 2.1rem; line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 1.45rem; margin: 32px 0 12px; }
+  h3 { font-size: 1rem; margin: 18px 0 6px; }
+  p { margin: 0 0 10px; }
+  .lead { color: var(--muted); max-width: 62ch; margin-bottom: 20px; }
+  .notice { border-left: 4px solid var(--accent); background: #E8F1F2; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: .93rem; margin-bottom: 24px; }
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  label { display: block; font-weight: 500; margin: 14px 0 6px; font-size: .95rem; }
+  .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
+  input[type=text], input[type=number], input[type=password], select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #B7C5C8; border-radius: 8px; font: inherit; color: var(--ink); background: #fff;
+  }
+  textarea { min-height: 130px; resize: vertical; }
+  input:focus, select:focus, textarea:focus, button:focus-visible, summary:focus-visible { outline: 3px solid #86C3CB; outline-offset: 1px; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; font-size: .92rem; font-weight: 400; }
+  .consent input { margin-top: 4px; }
+  button.primary { margin-top: 18px; background: var(--accent); color: #fff; border: 0; padding: 12px 22px; font: inherit; font-weight: 600; border-radius: 8px; cursor: pointer; }
+  button.primary:hover { background: var(--accent-dark); }
+  button.primary:disabled { opacity: .55; cursor: not-allowed; }
+  button.ghost { background: none; border: 1px solid var(--line); padding: 8px 14px; border-radius: 8px; font: inherit; cursor: pointer; color: var(--ink); }
+  .error { background: #FBEAE9; border: 1px solid #E7B4B1; color: #7A1712; padding: 12px 16px; border-radius: 8px; margin-top: 16px; }
+  #demo-badge { display:none; background:#FFF3C4; border:1px solid #E5CE6B; padding:6px 10px; border-radius:6px; font-size:.85rem; margin-bottom:12px; }
+
+  /* progress: four agents working at the same time */
+  #progress { display: none; margin-top: 28px; }
+  .agent-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; }
+  .pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+  .agent-row:nth-child(3) .pulse { animation-delay: .2s; } .agent-row:nth-child(4) .pulse { animation-delay: .4s; } .agent-row:nth-child(5) .pulse { animation-delay: .6s; }
+  @keyframes pulse { 0%,100% { opacity: .25; transform: scale(.8);} 50% { opacity: 1; transform: scale(1.15);} }
+  @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+
+  /* results */
+  #results { display: none; }
+  .banner { padding: 16px 20px; border-radius: 10px; margin: 24px 0 8px; color: #fff; }
+  .banner strong { font-family: var(--serif); font-size: 1.3rem; display: block; margin-bottom: 4px; }
+  .u-emergency { background: var(--emergency); } .u-urgent_24h { background: var(--urgent); }
+  .u-see_doctor_soon { background: var(--soon); } .u-routine, .u-self_care { background: var(--routine); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; }
+  .poss { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .poss b { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; }
+  .tag { font-size: .8rem; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); white-space: nowrap; }
+  .tag.high { background: #FBE3E1; border-color: #E7B4B1; } .tag.moderate { background: #FFF0D6; border-color: #E8CE95; } .tag.low { background: #E7F1EC; border-color: #B5D3C3; }
+  .tag.mnm { background: #fff; border-color: var(--emergency); color: var(--emergency); }
+  ul { margin: 4px 0 8px; padding-left: 20px; } li { margin-bottom: 3px; }
+  .small { font-size: .9rem; color: var(--muted); }
+  details.agent { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; }
+  details.agent summary { cursor: pointer; padding: 14px 18px; display: flex; align-items: center; gap: 14px; list-style: none; }
+  details.agent summary::-webkit-details-marker { display: none; }
+  details.agent summary::after { content: "+"; margin-left: auto; font-size: 1.3rem; color: var(--muted); }
+  details.agent[open] summary::after { content: "\2212"; }
+  .agent-name { font-weight: 600; min-width: 160px; }
+  .meter { flex: 1; max-width: 160px; height: 8px; background: #E1E9EA; border-radius: 4px; overflow: hidden; }
+  .meter span { display: block; height: 100%; background: var(--accent); }
+  .agent-body { padding: 0 18px 16px; border-top: 1px solid var(--line); }
+  .tree { margin: 6px 0; padding-left: 0; list-style: none; }
+  .tree > li { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; margin-bottom: 10px; }
+  .tree .branch { margin-left: 8px; font-size: .92rem; }
+  .disclaimer { font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); margin-top: 32px; padding-top: 14px; }
+  @media (max-width: 600px) { .row { grid-template-columns: 1fr; } h1 { font-size: 1.7rem; } .agent-name { min-width: 0; } .meter { display:none; } }
+  @media print { form, #progress, button, .notice { display: none !important; } details.agent { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Symptom Specialist Agents</h1>
+  <p class="lead">Describe what you are feeling. Four AI specialists (cardiology, neurology, gastroenterology and rheumatology) review it at the same time, and a coordinator combines their views into possible causes and suggested next steps.</p>
+  <div class="notice"><strong>This is not a doctor and not a diagnosis.</strong> It helps you prepare for a conversation with a real clinician. If you think you are having an emergency, call your local emergency number (India 112 or 108, US 911, UK 999) instead of using this tool.</div>
+  <div id="demo-badge">Demo mode: answers below are placeholders, not real AI output.</div>
+
+  <form id="form" autocomplete="off">
+    <div class="row">
+      <div><label for="age">Age</label><input id="age" type="number" min="0" max="120" required></div>
+      <div><label for="sex">Sex</label>
+        <select id="sex" required><option value="">Choose</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div>
+    </div>
+    <label for="symptoms">What are your symptoms? <span class="hint">Where it is, what it feels like, what makes it better or worse.</span></label>
+    <textarea id="symptoms" required minlength="10" maxlength="3000" placeholder="Example: For 3 days I have had a pressure in the middle of my chest when I climb stairs. It goes away when I rest."></textarea>
+    <label for="duration">How long has this been going on? <span class="hint">(optional)</span></label>
+    <input id="duration" type="text" maxlength="200" placeholder="Example: 3 days, getting worse">
+    <label for="conditions">Known medical conditions <span class="hint">(optional)</span></label>
+    <input id="conditions" type="text" maxlength="1000" placeholder="Example: diabetes, high blood pressure">
+    <label for="medications">Medicines you take <span class="hint">(optional)</span></label>
+    <input id="medications" type="text" maxlength="1000" placeholder="Example: metformin">
+    <div id="code-wrap" style="display:none"><label for="code">Access code</label><input id="code" type="password" maxlength="100"></div>
+    <label class="consent"><input id="consent" type="checkbox" required> I understand this tool gives general information only, does not replace a doctor, and my text is sent to an AI service to produce the result.</label>
+    <button class="primary" id="go" type="submit">Analyse my symptoms</button>
+    <div id="error" class="error" style="display:none" role="alert"></div>
+  </form>
+
+  <section id="progress" aria-live="polite">
+    <h2>The specialists are reviewing your description</h2>
+    <p class="small">This usually takes 20 to 40 seconds. All four work at the same time.</p>
+    <div class="agent-row"><span class="pulse"></span>Cardiology Check</div>
+    <div class="agent-row"><span class="pulse"></span>Neurology Check</div>
+    <div class="agent-row"><span class="pulse"></span>Gastroenterology Check</div>
+    <div class="agent-row"><span class="pulse"></span>Rheumatology Check</div>
+    <div class="agent-row"><span class="pulse"></span>Final Results</div>
+  </section>
+
+  <section id="results"></section>
+</main>
+
+<script>
+(function () {
+  var URGENCY = {
+    emergency: ["Get emergency care now", "u-emergency"],
+    urgent_24h: ["See a doctor within about 24 hours", "u-urgent_24h"],
+    see_doctor_soon: ["Book a doctor visit in the next few days", "u-see_doctor_soon"],
+    routine: ["Raise it at a routine check-up", "u-routine"],
+    self_care: ["Home care is reasonable, watch the warning signs", "u-self_care"]
+  };
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Safe element builder: text is always inserted as text, never as HTML.
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (k) { if (k) e.appendChild(k); });
+    return e;
+  }
+  function list(items) {
+    if (!items || !items.length) return null;
+    return el("ul", null, items.map(function (t) { return el("li", { text: t }); }));
+  }
+  function section(title, items) {
+    var l = list(items);
+    return l ? el("div", null, [el("h3", { text: title }), l]) : null;
+  }
+
+  fetch("/api/config").then(function (r) { return r.json(); }).then(function (c) {
+    if (c.needs_code) $("code-wrap").style.display = "block";
+    if (c.demo) $("demo-badge").style.display = "block";
+  }).catch(function () {});
+
+  function showError(msg) { var e = $("error"); e.textContent = msg; e.style.display = "block"; }
+
+  $("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    $("error").style.display = "none";
+    $("results").style.display = "none";
+    $("results").textContent = "";
+    $("go").disabled = true;
+    $("go").textContent = "Analysing...";
+    $("progress").style.display = "block";
+    $("progress").scrollIntoView({ behavior: "smooth", block: "start" });
+
+    var body = {
+      age: parseInt($("age").value, 10), sex: $("sex").value, symptoms: $("symptoms").value.trim(),
+      duration: $("duration").value.trim(), conditions: $("conditions").value.trim(),
+      medications: $("medications").value.trim(), access_code: $("code").value
+    };
+    fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) {
+            var d = data.detail;
+            throw new Error(typeof d === "string" ? d : "Please check the form: symptoms need at least 10 characters and age must be filled in.");
+          }
+          return data;
+        });
+      })
+      .then(render)
+      .catch(function (err) { showError(err.message || "Something went wrong. Please try again."); })
+      .then(function () {
+        $("progress").style.display = "none";
+        $("go").disabled = false;
+        $("go").textContent = "Analyse my symptoms";
+      });
+  });
+
+  function render(data) {
+    var root = $("results");
+    root.textContent = "";
+    var t = data.triage || {};
+
+    if (t.level === "crisis") {
+      root.appendChild(el("div", { "class": "banner u-emergency" }, [
+        el("strong", { text: "Please reach out for support right now" }),
+        el("span", { text: t.message })
+      ]));
+      finish(root); return;
+    }
+
+    var s = data.synthesis;
+    var u = URGENCY[s.urgency] || URGENCY.see_doctor_soon;
+    root.appendChild(el("div", { "class": "banner " + u[1] }, [
+      el("strong", { text: u[0] }),
+      el("span", { text: s.urgency_reason })
+    ]));
+    if (t.level === "emergency") {
+      root.appendChild(el("div", { "class": "error", text: t.message + " Warning signs noticed: " + t.reasons.join(", ") + "." }));
+    }
+
+    root.appendChild(el("h2", { text: "Summary" }));
+    root.appendChild(el("div", { "class": "card" }, [
+      el("p", { text: s.plain_summary }),
+      el("p", null, [el("b", { text: "Suggested first doctor: " }), el("span", { text: s.recommended_doctor })])
+    ]));
+
+    root.appendChild(el("h2", { text: "Possible causes, combined" }));
+    (s.top_possibilities || []).forEach(function (p) {
+      root.appendChild(el("div", { "class": "card" }, [
+        el("div", { "class": "poss" }, [el("b", { text: p.condition }), el("span", { "class": "tag " + p.likelihood, text: p.likelihood + " likelihood" })]),
+        el("p", { text: p.why }),
+        el("p", { "class": "small", text: "Supported by: " + (p.supported_by || []).join(", ") })
+      ]));
+    });
+
+    var next = el("div", { "class": "card" }, [
+      section("Suggested next steps", s.next_steps),
+      section("Questions that would sharpen this assessment", s.questions_to_answer),
+      section("Go to emergency care if", s.go_to_emergency_if),
+      section("Where the specialists disagree or information is missing", s.disagreements_or_gaps)
+    ]);
+    root.appendChild(el("h2", { text: "What to do next" }));
+    root.appendChild(next);
+
+    root.appendChild(el("h2", { text: "What each specialist said" }));
+    (data.specialists || []).forEach(function (a) { root.appendChild(agentCard(a)); });
+
+    finish(root);
+  }
+
+  function agentCard(a) {
+    var d = el("details", { "class": "agent" });
+    if (a.error) {
+      d.appendChild(el("summary", null, [el("span", { "class": "agent-name", text: a.title })]));
+      d.appendChild(el("div", { "class": "agent-body" }, [el("p", { text: a.error })]));
+      return d;
+    }
+    var meter = el("div", { "class": "meter", title: "Relevance " + a.relevance + " of 10" }, [el("span", { style: "width:" + (a.relevance * 10) + "%" })]);
+    d.appendChild(el("summary", null, [
+      el("span", { "class": "agent-name", text: a.title }), meter,
+      el("span", { "class": "small", text: "relevance " + a.relevance + "/10" })
+    ]));
+    var body = el("div", { "class": "agent-body" }, [el("p", { text: a.summary })]);
+
+    body.appendChild(el("h3", { text: "Differential diagnosis" }));
+    (a.differential || []).forEach(function (c) {
+      var head = el("div", { "class": "poss" }, [el("b", { text: c.condition }),
+        el("span", null, [el("span", { "class": "tag " + c.likelihood, text: c.likelihood }),
+          c.must_not_miss ? el("span", { "class": "tag mnm", text: " must rule out" }) : null])]);
+      body.appendChild(el("div", { "style": "margin-bottom:12px" }, [head, el("p", { "class": "small", text: c.reasoning }),
+        section("For", c.supporting), section("Against or missing", c.against_or_missing)]));
+    });
+
+    if (a.decision_tree && a.decision_tree.length) {
+      body.appendChild(el("h3", { text: "Decision tree: questions a clinician would ask next" }));
+      body.appendChild(el("ul", { "class": "tree" }, a.decision_tree.map(function (n) {
+        return el("li", null, [el("b", { text: n.question }),
+          el("div", { "class": "branch", text: "If yes: " + n.if_yes }),
+          el("div", { "class": "branch", text: "If no: " + n.if_no })]);
+      })));
+    }
+    [section("Warning signs", a.red_flags), section("Tests a doctor might consider", a.suggested_tests), section("Next steps", a.next_steps)]
+      .forEach(function (x) { if (x) body.appendChild(x); });
+    d.appendChild(body);
+    return d;
+  }
+
+  function finish(root) {
+    var print = el("button", { "class": "ghost", type: "button", text: "Print or save as PDF" });
+    print.addEventListener("click", function () { window.print(); });
+    root.appendChild(el("p", null, [print]));
+    root.appendChild(el("p", { "class": "disclaimer", text: "This tool provides general information generated by AI. It can be wrong or incomplete. It is not medical advice, diagnosis or treatment, and no doctor-patient relationship is created. Always talk to a qualified clinician about your health." }));
+    root.style.display = "block";
+    root.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+})();
+</script>
+</body>
+</html>
